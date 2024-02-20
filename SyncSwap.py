@@ -4,8 +4,8 @@ import json
 import time
 from web3.exceptions import TransactionNotFound
 from eth_abi import abi
-from utils.transaction_utils import sign_transaction, send_raw_transaction, get_contract, wait_for_transaction_finish, approve
-from zkSyncData import ZKSYNC_TOKENS, SYNCSWAP_CONTRACT
+from utils.transaction_utils import sign_transaction, send_raw_transaction, get_contract, wait_for_transaction_finish, approve, get_amount_wei
+from zkSyncData import ZKSYNC_TOKENS, SYNCSWAP_CONTRACT, ZERO_ADDRESS
 
 # Loading the ABIs of the syncswap contracts
 abi_path_router = os.path.join(os.path.dirname(__file__), "abis/syncswap/router.json")
@@ -37,8 +37,8 @@ def syncswap_swap(private_key, amount, from_token, to_token):
     
     contract_swap = w3.eth.contract(address=contract_address, abi=SYNCSWAP_ROUTER_ABI)
 
-    # Convert amount to wei format
-    amount_wei = w3.to_wei(amount, 'ether')
+    # Convert amount to wei format (depending on the token decimal, e.g. USDC has 6 decimals and ETH has 18 decimals)
+    amount_wei = get_amount_wei(from_token, w3, account, amount)
 
     # Get the gas price
     gas_price = w3.eth.gas_price
@@ -83,7 +83,7 @@ def syncswap_swap(private_key, amount, from_token, to_token):
 
         pool_address = get_pool(from_token, to_token)
 
-        if pool_address != "0x0000000000000000000000000000000000000000":
+        if pool_address != ZERO_ADDRESS:
             if from_token == "ETH":
                 transaction.update({"value": amount_wei})
             else:
@@ -95,13 +95,13 @@ def syncswap_swap(private_key, amount, from_token, to_token):
             steps = [{
                 "pool": pool_address,
                 "data": abi.encode(["address", "address", "uint8"], [token_address, account.address, 1]),
-                "callback": "0x0000000000000000000000000000000000000000",
+                "callback": ZERO_ADDRESS,
                 "callbackData": "0x"
             }]
 
             paths = [{
                 "steps": steps,
-                "tokenIn": "0x0000000000000000000000000000000000000000" if from_token == "ETH" else token_address,
+                "tokenIn": ZERO_ADDRESS if from_token == "ETH" else token_address,
                 "amountIn": amount_wei
             }]
 
@@ -129,5 +129,6 @@ private_key = '-'
 amount = 0.0001
 from_token = 'ETH'
 to_token = 'USDC'
+slippage = 0.005
 
 syncswap_swap(private_key, amount, from_token, to_token)

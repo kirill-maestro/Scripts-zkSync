@@ -1,4 +1,6 @@
 # ZKSync tokens addresses that we need to create transactions
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+
 ZKSYNC_TOKENS = {
     "ETH": "0x5aea5775959fbc2557cc8789bc1bf90a239d9a91",
     "WETH": "0x5aea5775959fbc2557cc8789bc1bf90a239d9a91",
@@ -13,4 +15,15 @@ ZKSYNC_TOKENS = {
 SYNCSWAP_CONTRACT = {
     "router": "0x2da10A1e27bF85cEdD8FFb1AbBe97e53391C0295",
     "classic_pool": "0xf2DAd89f2788a8CD54625C60b55cD3d2D0ACa7Cb"
+}
+
+# iZUMi contract addresses we need to operate with iZUMi
+IZUMI_CONTRACT = {
+    "swap": "0x943ac2310D9BC703d6AB5e5e76876e212100f894",
+    "router": "0x6C31035D62541ceba2Ac587ea09891d1645D6D07"
+}
+
+# Woofi contract addresses we need to operate with Woofi
+WOOFI_CONTRACTS = {
+    "router": "0xfd505702b37Ae9b626952Eb2DD736d9045876417"
 }
