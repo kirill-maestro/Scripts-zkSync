@@ -5,7 +5,7 @@ import time
 from web3.exceptions import TransactionNotFound
 from eth_abi import abi
 from utils.transaction_utils import sign_transaction, send_raw_transaction, get_contract, wait_for_transaction_finish, approve, get_amount_wei
-from zkSyncData import ZKSYNC_TOKENS, WOOFI_CONTRACTS, ZERO_ADDRESS
+from zkSyncData import ZKSYNC_TOKENS, WOOFI_CONTRACT, ZERO_ADDRESS
 
 # Loading the ABIs of the syncswap contracts
 abi_path_router = os.path.join(os.path.dirname(__file__), "abis/woofi/router.json")
@@ -25,7 +25,7 @@ def woofi_swap(private_key, amount, from_token, to_token):
     w3.eth.default_account = account.address
 
     # Create the contract instance using the ABI and contract address
-    contract_address = WOOFI_CONTRACTS['router']
+    contract_address = WOOFI_CONTRACT['router']
     
     contract_swap = w3.eth.contract(address=contract_address, abi=WOOFI_ROUTER_ABI)
 
@@ -67,7 +67,7 @@ def woofi_swap(private_key, amount, from_token, to_token):
                 from_token_address = Web3.to_checksum_address(ZKSYNC_TOKENS[from_token])
                 to_token_address = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
 
-                approve(amount_wei, from_token_address, WOOFI_CONTRACTS["router"], account, w3)
+                approve(amount_wei, from_token_address, WOOFI_CONTRACT["router"], account, w3)
                 transaction.update({"nonce": w3.eth.get_transaction_count(account.address)})
 
             min_amount_out = get_min_amount_out(from_token_address, to_token_address, amount_wei, slippage)

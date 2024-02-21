@@ -180,7 +180,7 @@ def iZUMi_swap(private_key, amount, from_token, to_token):
 private_key = '-'
 amount = 0.000001
 from_token = 'ETH'
-to_token = 'USDT'
+to_token = 'USDC'
 slippage = 0.005
 
 iZUMi_swap(private_key, amount, from_token, to_token)

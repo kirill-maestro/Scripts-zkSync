@@ -24,6 +24,10 @@ IZUMI_CONTRACT = {
 }
 
 # Woofi contract addresses we need to operate with Woofi
-WOOFI_CONTRACTS = {
+WOOFI_CONTRACT = {
     "router": "0xfd505702b37Ae9b626952Eb2DD736d9045876417"
+}
+
+DMAIL_CONTRACT = {
+    "dmail": "0x981F198286E40F9979274E0876636E9144B8FB8E"
 }
