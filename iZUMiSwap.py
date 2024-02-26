@@ -2,7 +2,6 @@ from web3 import Web3
 import os
 import json
 import time
-from web3.exceptions import TransactionNotFound
 from eth_abi import abi
 from utils.transaction_utils import sign_transaction, send_raw_transaction, get_contract, wait_for_transaction_finish, approve, get_amount_wei
 from zkSyncData import ZKSYNC_TOKENS, IZUMI_CONTRACT, ZERO_ADDRESS
@@ -12,17 +11,19 @@ abi_path_swap = os.path.join(os.path.dirname(__file__), "abis/iZUMi/swap.json")
 with open(abi_path_swap, "r") as file:
     IZUMI_SWAP_ABI = json.load(file)
 
-abi_path_router = os.path.join(os.path.dirname(__file__), "abis/iZUMi/router.json")
+abi_path_router = os.path.join(
+    os.path.dirname(__file__), "abis/iZUMi/router.json")
 with open(abi_path_router, "r") as file:
     IZUMI_ROUTER_ABI = json.load(file)
 
-GAS_MULTIPLIER = 1.1
+GAS_MULTIPLIER = 1.01
 
 
-def iZUMi_swap(private_key, amount, from_token, to_token):
+def iZUMi_swap(private_key, amount, from_token, to_token, slippage):
 
-     # Connect to the Ethereum network -> put your own RPC URL here
-    w3 = Web3(Web3.HTTPProvider("https://rpc.ankr.com/zksync_era/72e6ee41b6e696261935e39b2b12db5cea4009c7e931c7d23f47f3d180656f2b"))
+    # Connect to the Ethereum network -> put your own RPC URL here
+    w3 = Web3(Web3.HTTPProvider(
+        "https://rpc.ankr.com/zksync_era/"))
 
     # Load the private key and get the account
     account = w3.eth.account.from_key(private_key)
@@ -33,8 +34,9 @@ def iZUMi_swap(private_key, amount, from_token, to_token):
     # Create the contract instance using the ABI and contract address
     contract_address_router = IZUMI_CONTRACT['router']
     contract_address_swap = IZUMI_CONTRACT['swap']
-    
-    contract_swap = w3.eth.contract(address=contract_address_swap, abi=IZUMI_SWAP_ABI)
+
+    contract_swap = w3.eth.contract(
+        address=contract_address_swap, abi=IZUMI_SWAP_ABI)
 
     # Convert amount to wei format
     amount_wei = get_amount_wei(from_token, w3, account, amount)
@@ -44,21 +46,22 @@ def iZUMi_swap(private_key, amount, from_token, to_token):
 
     # Construct the transaction
     transaction = {
-        'chainId': 324, 
+        'chainId': w3.eth.chain_id,
         'from': account.address,
         'nonce': w3.eth.get_transaction_count(account.address),
         'gasPrice': gas_price,
     }
 
-     # Get the minimum amount out -> this is the minimum amount of the 'to_token' that will be received
-    def get_min_amount_out(amount: int, token_in_address: str,token_out_address: str, slippage: float):
-        router_contract = get_contract(contract_address_router, w3, IZUMI_ROUTER_ABI)
+    # Get the minimum amount out -> this is the minimum amount of the 'to_token' that will be received
+    def get_min_amount_out(amount: int, token_in_address: str, token_out_address: str, slippage: float):
+        router_contract = get_contract(
+            contract_address_router, w3, IZUMI_ROUTER_ABI)
         min_amount_out = router_contract.functions.getAmountOut(
             amount,
             token_in_address,
             token_out_address
         ).call()
-        
+
         return int(min_amount_out[0] - (min_amount_out[0] / 100 * slippage))
 
     def fee_2_hex(fee: int):
@@ -76,7 +79,7 @@ def iZUMi_swap(private_key, amount, from_token, to_token):
             return str(num)
         strs = 'ABCDEF'
         return strs[num - 10]
-    
+
     def get_path(token_chain: list, fee_chain: list):
         hex_str = token_chain[0]
         for i in range(len(fee_chain)):
@@ -85,41 +88,40 @@ def iZUMi_swap(private_key, amount, from_token, to_token):
 
         return hex_str
 
-
     def swap():
         try:
             deadline = int(time.time()) + 1000000
 
             if (from_token == 'ETH' and to_token == 'USDC') or (from_token == 'USDC' and to_token == 'ETH'):
-                fee = 400 # 0.2%
+                fee = 400  # 0.2%
                 token_chain = [
-                    Web3.to_checksum_address(ZKSYNC_TOKENS[from_token]), 
+                    Web3.to_checksum_address(ZKSYNC_TOKENS[from_token]),
                     Web3.to_checksum_address(ZKSYNC_TOKENS['USDT']),
                     Web3.to_checksum_address(ZKSYNC_TOKENS[to_token])
                 ]
                 fee_chain = [fee, fee]
             if (from_token == 'ETH' and to_token == 'USDT') or (from_token == 'USDT' and to_token == 'ETH'):
-                fee = 500 # 0.05%
-            
+                fee = 500  # 0.05%
+
                 token_chain = [
                     Web3.to_checksum_address(ZKSYNC_TOKENS[from_token]),
                     Web3.to_checksum_address(ZKSYNC_TOKENS[to_token])
                 ]
-            
+
                 fee_chain = [fee]
 
             if (from_token == 'ETH' and to_token == 'WETH') or (from_token == 'WETH' and to_token == 'ETH'):
-                fee = 0 # 0.0%
-            
+                fee = 0  # 0.0%
+
                 token_chain = [
                     Web3.to_checksum_address(ZKSYNC_TOKENS[from_token]),
                     Web3.to_checksum_address(ZKSYNC_TOKENS[to_token])
                 ]
-            
+
                 fee_chain = [fee]
 
             # So basically the idea is the following: there are no router functions or similar in ABIs that gives us the path directly, so we need to create it manually.
-            # The front end shows that the most favorable path for ETH to USDC is ETH -> USDT -> USDC path (it might change).   
+            # The front end shows that the most favorable path for ETH to USDC is ETH -> USDT -> USDC path (it might change).
             # We need to put the fees in hex inbetween the token addresses: like ETH_address + fee in hex + USDT_address + fee in hex + USDC_address
             path = get_path(token_chain, fee_chain)
 
@@ -127,24 +129,29 @@ def iZUMi_swap(private_key, amount, from_token, to_token):
             path = path.replace("0x", "")
 
             if from_token != 'ETH':
-                approve(amount_wei, Web3.to_checksum_address(ZKSYNC_TOKENS[from_token]), Web3.to_checksum_address(IZUMI_CONTRACT["router"]), account, w3)
+                approve(amount_wei, Web3.to_checksum_address(
+                    ZKSYNC_TOKENS[from_token]), Web3.to_checksum_address(IZUMI_CONTRACT["router"]), account, w3)
 
-            min_amount_out = get_min_amount_out(amount_wei, Web3.to_checksum_address(ZKSYNC_TOKENS[from_token]), Web3.to_checksum_address(ZKSYNC_TOKENS[to_token]), slippage)
+            min_amount_out = get_min_amount_out(amount_wei, Web3.to_checksum_address(
+                ZKSYNC_TOKENS[from_token]), Web3.to_checksum_address(ZKSYNC_TOKENS[to_token]), slippage)
 
             args = [[
                 Web3.to_bytes(hexstr=path),
-                account.address if from_token == 'ETH' else Web3.to_checksum_address(ZERO_ADDRESS),
+                account.address if from_token == 'ETH' else Web3.to_checksum_address(
+                    ZERO_ADDRESS),
                 amount_wei,
                 min_amount_out,
                 deadline,
             ]]
-            encode_data = contract_swap.encodeABI(fn_name='swapAmount', args=args)
+            encode_data = contract_swap.encodeABI(
+                fn_name='swapAmount', args=args)
             print("encode_data", encode_data)
-            
+
             if from_token == 'ETH':
                 call_args = [
                     encode_data,
-                    Web3.to_bytes(hexstr='0x12210e8a')  # refundETH 4bytes method-id
+                    # refundETH 4bytes method-id
+                    Web3.to_bytes(hexstr='0x12210e8a')
                 ]
             else:
                 call_args = [
@@ -165,22 +172,33 @@ def iZUMi_swap(private_key, amount, from_token, to_token):
             })
 
             contract_transaction.update({'maxFeePerGas': w3.eth.gas_price})
-            contract_transaction.update({'maxPriorityFeePerGas': w3.eth.gas_price})
+            contract_transaction.update(
+                {'maxPriorityFeePerGas': w3.eth.gas_price})
 
-            signed_transaction = sign_transaction(contract_transaction, w3, private_key, GAS_MULTIPLIER)
+            signed_transaction = sign_transaction(
+                contract_transaction, w3, private_key, GAS_MULTIPLIER)
 
             transaction_hash = send_raw_transaction(signed_transaction, w3)
 
             wait_for_transaction_finish(transaction_hash.hex(), account, w3)
+            print(f"[{amount}] iZUMi swaped [{from_token}] to [{to_token}]")
         except Exception as error:
             print(f"❌ iZUMi swap failed [{account.address}] {error}")
     swap()
 
-# Example usage
-private_key = '-'
-amount = 0.000001
-from_token = 'ETH'
-to_token = 'USDC'
-slippage = 0.005
 
-iZUMi_swap(private_key, amount, from_token, to_token)
+def main():
+    # SETTINGS START HERE:
+    amount = 0.000001  # How much of from_token do you want to swap?
+    from_token = 'ETH'  # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
+    to_token = 'USDC'  # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
+    slippage = 1  # The slippage tolerance in percentage
+    # SETTINGS END HERE
+
+    with open('keys.txt', 'r') as file:
+        for private_key in file:
+            private_key = private_key.strip()
+            iZUMi_swap(private_key, amount, from_token, to_token, slippage)
+
+
+main()

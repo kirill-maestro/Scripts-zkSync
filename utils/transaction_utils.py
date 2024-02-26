@@ -13,6 +13,8 @@ with open(abi_erc_20, "r") as file:
     ERC_20_ABI = json.load(file)
 
 # Convert amount to wei format (depending on the token decimal, e.g. USDC has 6 decimals and ETH has 18 decimals)
+
+
 def get_amount_wei(from_token, w3, account, amount):
     try:
         if from_token == "ETH":
@@ -20,16 +22,29 @@ def get_amount_wei(from_token, w3, account, amount):
             amount_wei = w3.to_wei(amount, "ether")
         else:
             balance = w3.get_balance(ZKSYNC_TOKENS[from_token])
-            amount_wei = int(balance["balance_wei"])    
+            amount_wei = int(balance["balance_wei"])
             balance = w3.get_balance(ZKSYNC_TOKENS[from_token])
             amount_wei = int(amount * 10 ** balance["decimal"])
     except Exception as exeption:
         print(f'get_amount_wei failed | {exeption}')
     return amount_wei
 
+
+def get_balance(from_token, w3, account):
+    try:
+        if from_token == "ETH":
+            balance = w3.eth.get_balance(account.address)
+        else:
+            balance = w3.get_balance(ZKSYNC_TOKENS[from_token])
+    except Exception as exeption:
+        print(f'get_balance failed | {exeption}')
+    return balance
+
 # The function to sign a transaction
+
+
 def sign_transaction(transaction, w3, private_key, GAS_MULTIPLIER):
-    
+
     try:
         try:
             gas = int(w3.eth.estimate_gas(transaction) * GAS_MULTIPLIER)
@@ -39,23 +54,29 @@ def sign_transaction(transaction, w3, private_key, GAS_MULTIPLIER):
         transaction.update({"gas": gas})
 
         print(f'sign_transaction#2 | {transaction}')
-        signed_transaction = w3.eth.account.sign_transaction(transaction, private_key)
+        signed_transaction = w3.eth.account.sign_transaction(
+            transaction, private_key)
         return signed_transaction
     except Exception as exeption:
         print(f'sign_transaction failed | {exeption}')
 
 # The function to send a raw transaction (broadcasting the signed transaction to the network for processing)
+
+
 def send_raw_transaction(signed_transaction, w3):
     try:
-        transaction_hash = w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+        transaction_hash = w3.eth.send_raw_transaction(
+            signed_transaction.rawTransaction)
 
         return transaction_hash
     except Exception as exeption:
         print(f'send_raw_transaction failed | {exeption}')
 
 # The function to check if the contract exists and if so to get contract instance or fallback to ERC20 contract
+
+
 def get_contract(contract_address: str, w3, abi=None):
-    try:    
+    try:
         contract_address = Web3.to_checksum_address(contract_address)
 
         if abi is None:
@@ -68,25 +89,25 @@ def get_contract(contract_address: str, w3, abi=None):
         print(f'get_contract failed | {exeption}')
 
 
-# The function to wait for the transaction to be processed, it basically helps to keep order of transaction execution 
+# The function to wait for the transaction to be processed, it basically helps to keep order of transaction execution
 def wait_for_transaction_finish(hash: str, account, w3, max_waiting_time=120):
     starting_time = time.time()
     while True:
         try:
             transaction_receipts = w3.eth.get_transaction_receipt(hash)
             transaction_status = transaction_receipts.get("status")
-            
+
             if transaction_status == 1:
                 print(f"✅ [{account.address}] {hash} successfully!")
                 return True
-            
+
             elif transaction_status is None:
                 time.sleep(1)
-            
+
             else:
                 print(f"❌ [{account.address}] {hash} failed!")
                 return False
-            
+
         except TransactionNotFound:
             if time.time() - starting_time > max_waiting_time:
                 print(f"❓ [{account.address}] transaction not found: {hash}")
@@ -94,13 +115,16 @@ def wait_for_transaction_finish(hash: str, account, w3, max_waiting_time=120):
             time.sleep(1)
 
 # The function to check the allowance to contract of a token
+
+
 def check_token_allowance(token_address: str, contract_address: str, account, w3) -> float:
     try:
         token_address = Web3.to_checksum_address(token_address)
         contract_address = Web3.to_checksum_address(contract_address)
 
         contract = w3.eth.contract(address=token_address, abi=ERC_20_ABI)
-        amount_approved = contract.functions.allowance(account.address, contract_address).call()
+        amount_approved = contract.functions.allowance(
+            account.address, contract_address).call()
 
         return amount_approved
     except Exception as exeption:
@@ -115,7 +139,8 @@ def approve(amount: float, token_address: str, contract_address: str, account, w
 
         contract = w3.eth.contract(address=token_address, abi=ERC_20_ABI)
 
-        allowance_amount = check_token_allowance(token_address, contract_address, account, w3)
+        allowance_amount = check_token_allowance(
+            token_address, contract_address, account, w3)
 
         if amount > allowance_amount or amount == 0:
             print(f"🗿🗿🗿 Success [{account.address}] Make approve")
@@ -135,7 +160,8 @@ def approve(amount: float, token_address: str, contract_address: str, account, w
                 approve_amount
             ).build_transaction(approval_transaction)
 
-            signed_transaction = sign_transaction(transaction, w3, account.private_key, 1)
+            signed_transaction = sign_transaction(
+                transaction, w3, account.private_key, 1)
 
             transaction_hash = send_raw_transaction(signed_transaction, w3)
 
