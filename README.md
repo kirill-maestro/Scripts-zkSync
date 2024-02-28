@@ -27,7 +27,6 @@ cd LobbyFi-Scripts-zkSync
 
 pip install -r requirements.txt
 
-python main.py
 ```
 
 2. Insert your rpc to each module:
