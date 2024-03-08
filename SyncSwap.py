@@ -88,7 +88,7 @@ def syncswap_swap(private_key, amount, from_token, to_token, slippage=1):
                 approve(amount_wei, token_address, Web3.to_checksum_address(
                     SYNCSWAP_CONTRACT["router"]), account, w3)
                 transaction.update(
-                    {"nonce": w3.w3.eth.get_transaction_count(account.address)})
+                    {"nonce": w3.eth.get_transaction_count(account.address)})
 
             min_amount_out = get_min_amount_out(
                 pool_address, token_address, amount_wei, slippage)
@@ -108,11 +108,14 @@ def syncswap_swap(private_key, amount, from_token, to_token, slippage=1):
 
             deadline = int(time.time()) + 1000000
 
-            contract_transaction = contract_swap.functions.swap(
-                paths,
-                min_amount_out,
-                deadline
-            ).build_transaction(transaction)
+            try:
+                contract_transaction = contract_swap.functions.swap(
+                    paths,
+                    min_amount_out,
+                    deadline
+                ).build_transaction(transaction)
+            except Exception as exception:
+                print(f"build_transaction failed | {exception}")
 
             signed_transaction = sign_transaction(
                 contract_transaction, w3, private_key, GAS_MULTIPLIER)
@@ -124,21 +127,21 @@ def syncswap_swap(private_key, amount, from_token, to_token, slippage=1):
         else:
             print(
                 f"[{account.address}] Swap path [{from_token}] to [{to_token}] not found!")
+        time.sleep(10)
 
     swap()
 
 def main():
     # SETTINGS START HERE:
-    amount = 0.0001  # How much of from_token do you want to bridge?
-    from_token = 'ETH' # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
-    to_token = 'USDC' # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
-    slippage = 1  # The slippage tolerance in percentage
+    amount = 1  # How much of from_token do you want to bridge?
+    from_token = 'USDC' # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
+    to_token = 'ETH' # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
+    slippage = 5  # The slippage tolerance in percentage
     # SETTINGS END HERE
 
     with open('keys.txt', 'r') as file:
         for private_key in file:
             private_key = private_key.strip()
             syncswap_swap(private_key, amount, from_token, to_token, slippage)
-
 
 main()

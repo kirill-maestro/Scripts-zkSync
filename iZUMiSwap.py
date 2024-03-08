@@ -130,7 +130,7 @@ def iZUMi_swap(private_key, amount, from_token, to_token, slippage):
 
             if from_token != 'ETH':
                 approve(amount_wei, Web3.to_checksum_address(
-                    ZKSYNC_TOKENS[from_token]), Web3.to_checksum_address(IZUMI_CONTRACT["router"]), account, w3)
+                    ZKSYNC_TOKENS[from_token]), Web3.to_checksum_address(IZUMI_CONTRACT["swap"]), account, w3)
 
             min_amount_out = get_min_amount_out(amount_wei, Web3.to_checksum_address(
                 ZKSYNC_TOKENS[from_token]), Web3.to_checksum_address(ZKSYNC_TOKENS[to_token]), slippage)
@@ -145,7 +145,6 @@ def iZUMi_swap(private_key, amount, from_token, to_token, slippage):
             ]]
             encode_data = contract_swap.encodeABI(
                 fn_name='swapAmount', args=args)
-            print("encode_data", encode_data)
 
             if from_token == 'ETH':
                 call_args = [
@@ -175,8 +174,11 @@ def iZUMi_swap(private_key, amount, from_token, to_token, slippage):
             contract_transaction.update(
                 {'maxPriorityFeePerGas': w3.eth.gas_price})
 
-            signed_transaction = sign_transaction(
-                contract_transaction, w3, private_key, GAS_MULTIPLIER)
+            try:
+                signed_transaction = sign_transaction(
+                    contract_transaction, w3, private_key, GAS_MULTIPLIER)
+            except Exception as exception:
+                print(f"sign_transaction failed | {exception}")
 
             transaction_hash = send_raw_transaction(signed_transaction, w3)
 
@@ -189,9 +191,9 @@ def iZUMi_swap(private_key, amount, from_token, to_token, slippage):
 
 def main():
     # SETTINGS START HERE:
-    amount = 0.000001  # How much of from_token do you want to swap?
-    from_token = 'ETH'  # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
-    to_token = 'USDC'  # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
+    amount = 0.5  # How much of from_token do you want to swap?
+    from_token = 'USDC'  # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
+    to_token = 'ETH'  # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
     slippage = 1  # The slippage tolerance in percentage
     # SETTINGS END HERE
 

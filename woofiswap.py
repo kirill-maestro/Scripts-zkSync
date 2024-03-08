@@ -86,8 +86,11 @@ def woofi_swap(private_key, amount, from_token, to_token, slippage):
                 account.address
             ).build_transaction(transaction)
 
-            signed_transaction = sign_transaction(
-                contract_transaction, w3, private_key, GAS_MULTIPLIER)
+            try:
+                signed_transaction = sign_transaction(
+                    contract_transaction, w3, private_key, GAS_MULTIPLIER)
+            except Exception as error:
+                print(f"sign_transaction failed | {error}")
 
             transaction_hash = send_raw_transaction(signed_transaction, w3)
 
@@ -102,9 +105,9 @@ def woofi_swap(private_key, amount, from_token, to_token, slippage):
 
 def main():
     # SETTINGS START HERE:
-    amount = 0.000001  # How much of from_token do you want to swap?
-    from_token = 'ETH'  # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
-    to_token = 'USDC'  # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
+    amount = 1  # How much of from_token do you want to swap?
+    from_token = 'USDC'  # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
+    to_token = 'ETH'  # ETH, WETH, WBTC, USDT, USDC, BUSD, MATIC available
     slippage = 1  # The slippage tolerance in percentage
     # SETTINGS END HERE
 
