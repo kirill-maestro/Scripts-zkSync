@@ -1,6 +1,7 @@
-![zksync scr](https://github.com/kirill-maestro/LobbyFi-Scripts-zkSync/assets/69819227/a0b37e93-4730-4547-99f9-28695c20416f)
 
-# 🏛️ LobbyFi-Scripts-zkSync 🏛️
+![Group 80](https://github.com/kirill-maestro/Scripts-zkSync/assets/69819227/7644850c-963f-43d8-ae15-df1b2a883b1d)
+
+# 🏛️ Scripts-zkSync 🏛️
 This is the script for zkSync Era chain that help people semi-automate transactions. 
 You do not need to use slow front end to do the transactions. 
 
@@ -14,16 +15,16 @@ You do not need to use slow front end to do the transactions.
 5. **Dmail**: Send dmails on zkSync Era. 
 
 ## Is it safe? 
-The scipt is as simple as possible with only the neccessary and reliable libraries used. Only the signed messages are communicated online meaning your private keys are saved on your local machine and thus are safe from being leaked. LobbyFi team has developed this script and uses it for own purposes. 
+The scipt is as simple as possible with only the neccessary and reliable libraries used. Only the signed messages are communicated online meaning your private keys are saved on your local machine and thus are safe from being leaked. We have developed this script and use it for own purposes. 
 
 
 ## Set up:
 
 1. Clone the repository and install dependencies:
 ```
-git clone https://github.com/kirill-maestro/LobbyFi-Scripts-zkSync
+git clone https://github.com/kirill-maestro/Scripts-zkSync
 
-cd LobbyFi-Scripts-zkSync
+cd Scripts-zkSync
 
 pip install -r requirements.txt
 
@@ -43,16 +44,3 @@ w3 = Web3(Web3.HTTPProvider("https://rpc.ankr.com/zksync_era/")) <- put your lin
 2. Go down till you see "# SETTINGS START HERE".
 3. Adjust the settings according to your requirements.
 4. Run the code of the module.
-
-## Questions? 
-
-👉 [feel free to ask in the telegram group](https://t.me/lobbyfichat)
-
-👉 [join the channel to not miss any updates or new scripts](https://t.me/lobbyfi)
-
-👉 [subscribe to twitter](https://twitter.com/lobbyfinance)
-
-👉 [delegate your governance tokens to LobbyFi and get rewards](https://lobbyfi.xyz)
-
-
-Developed by LobbyFi Team 🏛️
